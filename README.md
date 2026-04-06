@@ -94,6 +94,10 @@ Rather than using n8n's built-in OpenAI node, I call the API directly via HTTP R
 ### 4. Telegram Delivery
 
 Each pipeline sends its summaries to a private Telegram bot (`@tekstil_haber_bot`) created via BotFather. The message format:
+```
+{{ $json.choices[0].message.content }}
+🔗 {{ $('Code in JavaScript').item.json.url }}
+```
 {{ $json.choices[0].message.content }}
 🔗 {{ $('Code in JavaScript').item.json.url }}
 
