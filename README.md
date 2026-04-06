@@ -35,8 +35,7 @@ Our family business operates in textile manufacturing — weaving, dyeing, lamin
 
 ## Pipeline Architecture
 
-<img width="1880" height="937" alt="image" src="https://github.com/user-attachments/assets/a05440fb-930e-4d86-9a8e-715d57cb7929" />
-
+<img width="900" alt="Pipeline architecture" src="https://github.com/user-attachments/assets/a05440fb-930e-4d86-9a8e-715d57cb7929" />
 
 The system runs 4 independent parallel pipelines, all triggered by a single Schedule Trigger at 08:00 daily. Each pipeline is fully self-contained — if one source fails, the others continue unaffected.
 
@@ -81,38 +80,36 @@ This consistent output is what allows the rest of the pipeline — OpenAI call, 
 
 Rather than using n8n's built-in OpenAI node, I call the API directly via HTTP Request. This was a deliberate architectural choice — the built-in node doesn't pass input fields through to its output, which meant article URLs were getting lost. The manual HTTP Request approach gives full control over both input and output.
 
-```
-
 **Key decisions:**
 - **GPT-4o-mini** over GPT-4o — cost efficiency. Daily cost is well under $0.01 for all 4 pipelines combined
 - **Title-only input** — instead of sending full HTML content (which hits token limits and loses URL context), I send only the article title. The model summarizes based on title alone, which works well for news headlines
 - **150 max tokens** — enough for 2-3 sentences, prevents runaway responses
 - **Turkish output** — eliminates a separate translation step for English sources
 
-```
-
 ### 4. Telegram Delivery
 
 Each pipeline sends its summaries to a private Telegram bot (`@tekstil_haber_bot`) created via BotFather. The message format:
+
 ```
 {{ $json.choices[0].message.content }}
 🔗 {{ $('Code in JavaScript').item.json.url }}
 ```
-{{ $json.choices[0].message.content }}
-🔗 {{ $('Code in JavaScript').item.json.url }}
 
 The URL is retrieved directly from the Code node's output using n8n's node reference syntax — this is how we preserve the article link across the OpenAI API call.
 
+---
 
 ## Output Samples
 
 Every morning the bot delivers messages like this for each source:
 
-<img width="945" height="2048" alt="image" src="https://github.com/user-attachments/assets/46d87c0c-4d7d-457e-a12f-e3a3a2899eef" />
+<img width="400" alt="Telegram output sample 1" src="https://github.com/user-attachments/assets/46d87c0c-4d7d-457e-a12f-e3a3a2899eef" />
 
-<img width="945" height="2048" alt="image" src="https://github.com/user-attachments/assets/8e184d55-ff95-4d54-98e8-c050d4698148" />
+<img width="400" alt="Telegram output sample 2" src="https://github.com/user-attachments/assets/8e184d55-ff95-4d54-98e8-c050d4698148" />
 
-<img width="945" height="2048" alt="image" src="https://github.com/user-attachments/assets/f074de58-2cf8-4a0f-8be1-eec1db176175" />
+<img width="400" alt="Telegram output sample 3" src="https://github.com/user-attachments/assets/f074de58-2cf8-4a0f-8be1-eec1db176175" />
+
+---
 
 ## Architecture Decisions
 
@@ -123,6 +120,8 @@ Every morning the bot delivers messages like this for each source:
 | Title-only AI input | Full HTML content | Token limits, URL loss |
 | GPT-4o-mini | GPT-4o | Cost — ~100x cheaper, sufficient quality |
 | Telegram | WhatsApp, Email | Easiest n8n integration, free |
+
+---
 
 ### 5. Credentials & Setup
 
@@ -145,6 +144,8 @@ This project requires three external credentials to run:
 - Obtained by messaging [@userinfobot](https://t.me/userinfobot) and sending `/start`
 - Returns your numeric ID (e.g. `7984195604`)
 - Used as the `chatId` parameter in each Telegram node
+
+---
 
 ## Project Owner
 
