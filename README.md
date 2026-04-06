@@ -89,6 +89,8 @@ Rather than using n8n's built-in OpenAI node, I call the API directly via HTTP R
 - **150 max tokens** — enough for 2-3 sentences, prevents runaway responses
 - **Turkish output** — eliminates a separate translation step for English sources
 
+```
+
 ### 4. Telegram Delivery
 
 Each pipeline sends its summaries to a private Telegram bot (`@tekstil_haber_bot`) created via BotFather. The message format:
