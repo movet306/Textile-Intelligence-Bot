@@ -18,7 +18,7 @@ This is my second iteration of the project. The first version taught me where th
 
 ## The Problem
 
-Our family business operates in textile manufacturing — weaving, dyeing, lamination, coating, and yarn imports. Keeping track of raw material price movements, new technologies, and global market shifts is critical but time-consuming.
+Our family business operates in textile manufacturing. So, keeping track of raw material price movements, new technologies, and global market shifts is critical but time-consuming.
 
 **Before this project:**
 - Manually checking 4-5 websites every morning
@@ -37,7 +37,7 @@ Our family business operates in textile manufacturing — weaving, dyeing, lamin
 
 <img width="900" alt="Pipeline architecture" src="https://github.com/user-attachments/assets/a05440fb-930e-4d86-9a8e-715d57cb7929" />
 
-The system runs 4 independent parallel pipelines, all triggered by a single Schedule Trigger at 08:00 daily. Each pipeline is fully self-contained — if one source fails, the others continue unaffected.
+The system runs 4 independent parallel pipelines, all triggered by a single Schedule Trigger at 08:00 daily. Each pipeline is fully self-contained. If one source fails, the others continue unaffected.
 
 **Design decision:** I chose 4 independent pipelines over a single merged pipeline deliberately. In the first version of this project, I tried merging all sources into one stream before passing to AI — this caused the article URLs to get lost in the data flow. The independent pipeline approach keeps each article's metadata (title, url, source) intact throughout the entire chain.
 
