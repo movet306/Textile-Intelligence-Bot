@@ -147,6 +147,51 @@ This project requires three external credentials to run:
 
 ---
 
+---
+
+## Python Version
+
+In addition to the n8n pipeline, I built a pure Python implementation of the same system as part of my AI engineering learning path.
+
+**Located in:** [`python-version/`](https://github.com/movet306/Textile-Intelligence-Bot/tree/main/python-version)
+
+### What it does
+
+- Scrapes all 4 news sources using `requests` and `BeautifulSoup`
+- Sends collected headlines to OpenAI API in a single batch call
+- Returns a consolidated Turkish-language summary of the day's textile news
+
+### Tech stack
+
+| Library | Purpose |
+|---------|---------|
+| `requests` | HTTP requests to news sources |
+| `beautifulsoup4` | HTML parsing and headline extraction |
+| `openai` | OpenAI API integration |
+| `python-dotenv` | Secure API key management via `.env` |
+
+### How to run
+```bash
+# 1. Create and activate virtual environment
+python -m venv venv
+.\venv\Scripts\Activate.ps1
+
+# 2. Install dependencies
+pip install -r requirements.txt
+
+# 3. Add your OpenAI API key
+echo OPENAI_API_KEY=your-key-here > .env
+
+# 4. Run
+python fetch_news.py
+```
+
+### Key difference from n8n version
+
+The n8n version processes each article individually and sends separate Telegram messages. The Python version collects all headlines first, then summarizes them in a single OpenAI call — a more token-efficient approach that produces a consolidated daily briefing.
+
+
+---
 ## Project Owner
 
 **Mert Ovet**  
