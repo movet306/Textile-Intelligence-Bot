@@ -145,6 +145,23 @@ This project requires three external credentials to run:
 - Returns your numeric ID (e.g. `7984195604`)
 - Used as the `chatId` parameter in each Telegram node
 
+## 6. Cloud Deployment
+
+The pipeline is deployed on Railway using the official n8n Docker image, running 24/7 regardless of local machine state.
+
+**The problem it solves:** During development, n8n ran locally. This meant the Schedule Trigger only fired when my machine was on — defeating the purpose of a fully automated morning briefing.
+
+**The solution:** Migrated the entire workflow to Railway's cloud infrastructure using a production-grade template (n8n with workers, Redis, and PostgreSQL). The deployment took under 10 minutes.
+
+| Component | Role |
+|---|---|
+| Primary (n8n) | Workflow execution engine |
+| Worker | Handles background job processing |
+| Redis | Queue management between primary and worker |
+| PostgreSQL | Persistent workflow and execution storage |
+
+**Key outcome:** The workflow is now published and running on a Railway-hosted URL. Every morning at 08:00, the pipeline executes automatically — no local dependency, no manual trigger, no open laptop required.
+
 ---
 
 ---
