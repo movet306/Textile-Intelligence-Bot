@@ -203,7 +203,7 @@ I created a dedicated Google Cloud project (`n8n-textile-bot`), enabled the Goog
 
 **The Memory Sheet**
 
-I created a Google Sheet called **Textile News Memory** with two columns: `title` and `date`, shared with the service account email as Editor. Every article delivered to Telegram is written here. On the next run, the bot reads this sheet before doing anything else.
+I created a Google Sheet called Textile News Memory with two columns: title and date, shared with the service account email as Editor. The bot populates this entirely on its own, every article it delivers to Telegram gets written here automatically, with a timestamp. Over time the sheet becomes a self-building archive of everything the bot has ever sent. On each new run, the pipeline reads this log before doing anything else, so no story ever makes it through twice.
 
 > *<img width="2812" height="1450" alt="image" src="https://github.com/user-attachments/assets/bf8b1a24-b29a-45cb-a018-d2f3fefd7e33" />
 *
