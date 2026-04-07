@@ -162,6 +162,113 @@ The pipeline is deployed on Railway using the official n8n Docker image, running
 
 **Key outcome:** The workflow is now published and running on a Railway-hosted URL. Every morning at 08:00, the pipeline executes automatically — no local dependency, no manual trigger, no open laptop required.
 
+## Version 3: Persistent Memory System
+
+### The Problem I Noticed
+
+After the pipeline had been running for several days, a clear pattern emerged: **the same articles kept appearing in Telegram every morning.**
+
+News sites keep their articles on the front page for days — sometimes weeks. So every time the bot ran, it would scrape the same headlines it had already processed the day before, pass them through OpenAI, and deliver them again to Telegram. There was no mechanism to distinguish between a genuinely new article and one that had already been delivered.
+
+The fix required the bot to have **persistent memory** — a record of every article it had ever sent, that it could check against on each new run.
+
+---
+
+### Choosing the Right Storage Solution
+
+| Option | Problem |
+|--------|---------|
+| n8n internal database | Not easily queryable from Code nodes mid-execution |
+| External database (PostgreSQL, Redis) | Requires additional infrastructure and credentials |
+| Google Sheets | Simple, free, human-readable, natively supported in n8n |
+
+Google Sheets was the clear choice for this scale. It acts as an append-only log of delivered articles — visible, editable, and easy to reset if needed. No extra infrastructure required beyond what Railway already provides.
+
+---
+
+### Setting Up the Google Sheets Integration
+
+**Google Cloud & Service Account**
+
+
+Rather than OAuth2 — which requires periodic re-authentication and would silently break the morning automation — I used a **Google Service Account**. A service account key never expires and requires no human interaction after initial setup.
+
+I created a dedicated Google Cloud project (`n8n-textile-bot`), enabled the Google Sheets API, and created a Service Account named `tekstil-haber-bot`. The setup generates a JSON key file containing a `private_key` and `client_email` — these are what n8n uses to authenticate.
+
+> *<img width="1568" height="750" alt="image" src="https://github.com/user-attachments/assets/0426614c-d519-4f9d-b5e8-deea684d1610" />
+*
+
+**The Memory Sheet**
+
+I created a Google Sheet called **Textile News Memory** with two columns: `title` and `date`, shared with the service account email as Editor. Every article delivered to Telegram is written here. On the next run, the bot reads this sheet before doing anything else.
+
+> *<img width="2812" height="1450" alt="image" src="https://github.com/user-attachments/assets/bf8b1a24-b29a-45cb-a018-d2f3fefd7e33" />
+*
+
+In n8n, I added a credential of type **Google Service Account API** — not OAuth2 — using the `client_email` and `private_key` from the JSON key file. This single credential is shared across all four pipelines.
+
+---
+
+### Rethinking the Pipeline Architecture
+
+The first approach I tried was adding an IF node after the JavaScript parser — check each article against the sheet, route new ones forward, drop old ones. This failed for a fundamental reason: the IF node only evaluates one condition at a time. When the parser returns 5 articles, the IF node checks the first one and routes it correctly, but the remaining 4 pass through regardless of whether they had been seen before.
+
+The solution was to move the Google Sheets read to **before** the JavaScript parser — making it the second node in every pipeline, right after the HTTP Request. The Code node can reference any upstream node by name, so the parser can simultaneously pull the raw HTML from the scraping node and the full list of saved titles from the Sheets node, filtering everything in a single pass. No branching. No IF nodes. No conditional routing.
+
+The final pipeline order for each source:
+
+```
+HTTP Request (scrape site)
+  → Get row(s) in sheet (read full memory — no filters)
+    → Code in JavaScript (parse HTML + deduplicate against sheet)
+      → HTTP Request (OpenAI summarize)
+        → Telegram (deliver)
+          → Append row in sheet (write to memory)
+```
+
+> *<img width="2420" height="1094" alt="image" src="https://github.com/user-attachments/assets/488e6c5a-e67a-4576-971f-8c999588de56" />
+*
+
+---
+
+### The JavaScript Parsers: Updated for Deduplication
+
+Each parser now builds two sets before iterating: `savedTitles` (pulled from the Google Sheet — articles already delivered) and `seenTitles` (duplicates found within the current page's HTML). An article is only added to the output if its title appears in neither set.
+
+Each source required a slightly different extraction approach based on its HTML structure. Most sources embed the article title directly inside the anchor tag, so a single regex captures both the URL and the title in one pass. Dünya Gazetesi is the exception — titles are not inside the anchor tag, so I extract URLs first using their unique article ID pattern (`haberi-\d+`), then derive the title from the URL slug.
+
+Every parser returns the same structure regardless of source — `{ title, url, source }` — which is what allows the OpenAI, Telegram, and Sheets nodes downstream to work identically across all four pipelines.
+
+If a parser returns zero items, the pipeline stops naturally at that node. No OpenAI calls are made, no Telegram messages are sent, no sheet writes occur.
+
+---
+
+### Writing to Memory: The Append Row Node
+
+After each article is delivered to Telegram, its title and timestamp are written back to the Google Sheet:
+
+```
+title: {{ $('Code in JavaScript').item.json.title }}
+date:  {{ $now.toISO() }}
+```
+
+The `.item` reference is critical here. Because the pipeline processes multiple articles per run, each write must correspond to the article currently being processed — not always the first one. Using `.first()` would write the same title to the sheet repeatedly, once for each item in the pipeline, completely defeating the memory system.
+
+> *<img width="2761" height="1345" alt="image" src="https://github.com/user-attachments/assets/930eda21-1e23-470f-9b8f-8b4a8987f3ce" />
+*
+
+---
+
+### Key Decisions in This Update
+
+| Decision | Alternative Tried | Why I Changed It |
+|----------|-------------------|----------------|
+| Read sheet before parser | IF node after parser | IF node only checks first item, rest pass through unfiltered |
+| Filter inside Code node (single pass) | Separate filter node downstream | Node reference errors across branches |
+| Service Account auth | OAuth2 | OAuth tokens expire, breaks automation silently |
+| `.item` reference in Append Row | `.first()` | `.first()` writes same title N times, defeating the memory system |
+| `Always Output Data` on Get Row(s) | Default behavior | Pipeline halts on first run when sheet is empty |
+
 ---
 
 ---
