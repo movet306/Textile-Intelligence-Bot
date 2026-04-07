@@ -2,6 +2,7 @@
 ### Automated Multi-Source News Aggregation, AI Summarization & Telegram Delivery Pipeline
 
 > **Tech Stack:** n8n · OpenAI GPT-4o-mini API · Telegram Bot API · Google Sheets API · JavaScript · Web Scraping
+
 > **Project Owner:** Mert Ovet | [LinkedIn](https://linkedin.com/in/mertovet)
 
 ---
