@@ -13,7 +13,8 @@ I built this project to solve a real problem I face daily: staying up to date wi
 
 The result is a fully automated pipeline that scrapes 4 international and local textile news sources every morning at 08:00, extracts article titles and links using custom JavaScript parsing, sends each title through OpenAI's GPT-4o-mini API for AI summarization, and delivers clean Turkish-language briefings with clickable source links directly to Telegram — all without any manual input.
 
-This project has gone through three iterations. The first version established the core pipeline but ran locally — it only fired when my laptop was on, which defeated the purpose of a fully automated morning briefing. The second moved the entire workflow to Railway's cloud infrastructure, making it run 24/7 regardless of local machine state. The third — and current — version adds a persistent memory system: the bot now tracks every article it has ever delivered, and never sends the same story twice.
+This project has gone through **three iterations**. The first version established the core pipeline but ran locally ,it only fired when my laptop was on, which defeated the purpose of a fully automated morning briefing. **The second moved the entire workflow to Railway's cloud infrastructure, making it run 24/7 regardless of local machine state**. The third and current version **adds a persistent memory system: the bot now tracks every article it has ever delivered, and never sends the same story twice.**
+
 The sections below document both layers: the pipeline architecture that handles scraping, AI summarization, and Telegram delivery, and the memory system built on top of it that makes the whole thing reliable as a daily briefing tool.
 
 ---
@@ -35,7 +36,7 @@ Our family business operates in textile manufacturing. So, keeping track of raw 
 
 ---
 
-## The first Pipeline Architecture (Before the Memory System)
+## Version 1 Pipeline Architecture (Before the Memory System)
 
 <img width="900" alt="Pipeline architecture" src="https://github.com/user-attachments/assets/a05440fb-930e-4d86-9a8e-715d57cb7929" />
 
